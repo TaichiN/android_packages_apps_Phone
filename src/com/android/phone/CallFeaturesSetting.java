@@ -1746,7 +1746,7 @@ public class CallFeaturesSetting extends PreferenceActivity
             ((PreferenceCategory) prefSet.findPreference(CATEGORY_ADVANCED))
                     .removePreference(mButtonHideHoldButton);
         }
-	mButtonRejectedAsMissed = (CheckBoxPreference) prefSet.findPreference(BUTTON_REJECTED_AS_MISSED);
+        mButtonRejectedAsMissed = (CheckBoxPreference) prefSet.findPreference(BUTTON_REJECTED_AS_MISSED);
         mButtonRejectedAsMissed.setChecked(mRejectedAsMissed);
     }
 
