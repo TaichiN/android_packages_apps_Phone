@@ -37,6 +37,7 @@ import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.res.Configuration;
 import android.media.AudioManager;
+import android.media.AudioSystem;
 import android.net.Uri;
 import android.os.AsyncResult;
 import android.os.Binder;
@@ -261,9 +262,9 @@ public class PhoneGlobals extends ContextWrapper
 
     // For adding to Blacklist from call log
     private static final String INSERT_BLACKLIST = "com.android.phone.INSERT_BLACKLIST";
-    public static final String REMOVE_BLACKLIST = "com.android.phone.REMOVE_BLACKLIST";
-    public static final String EXTRA_NUMBER = "number";
-    public static final int BL_NOTIFICATION_ID = 19991; // just something random
+    private static final String REMOVE_BLACKLIST = "com.android.phone.REMOVE_BLACKLIST";
+    private static final String EXTRA_NUMBER = "number";
+    private static final String EXTRA_FROM_NOTIFICATION = "fromNotification";
 
     /**
      * Set the restore mute state flag. Used when we are setting the mute state
@@ -764,6 +765,14 @@ public class PhoneGlobals extends ContextWrapper
         return PendingIntent.getBroadcast(context, 0, intent, 0);
     }
 
+    /* package */ static PendingIntent getUnblockNumberFromNotificationPendingIntent(
+            Context context, String number) {
+        Intent intent = new Intent(REMOVE_BLACKLIST);
+        intent.putExtra(EXTRA_NUMBER, number);
+        intent.putExtra(EXTRA_FROM_NOTIFICATION, true);
+        return PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+    }
+
     private static String getCallScreenClassName() {
         return InCallScreen.class.getName();
     }
@@ -1222,6 +1231,12 @@ public class PhoneGlobals extends ContextWrapper
      */
     /* package */ void updatePhoneState(PhoneConstants.State state) {
         if (state != mLastPhoneState) {
+
+            String voiceQualParam = PhoneUtils.PhoneSettings.getVoiceQualityParameter(this);
+            if (voiceQualParam != null) {
+                AudioSystem.setParameters(voiceQualParam);
+            }
+
             mLastPhoneState = state;
             updateProximitySensorMode(state);
 
@@ -1535,9 +1550,10 @@ public class PhoneGlobals extends ContextWrapper
             } else if (action.equals(INSERT_BLACKLIST)) {
                 blackList.add(intent.getStringExtra(EXTRA_NUMBER));
             } else if (action.equals(REMOVE_BLACKLIST)) {
-                // Dismiss the notification that brought us here and remove the number from the list
-                NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-                nm.cancel(BL_NOTIFICATION_ID);
+                if (intent.getBooleanExtra(EXTRA_FROM_NOTIFICATION, false)) {
+                    // Dismiss the notification that brought us here
+                    notificationMgr.cancelBlacklistedCallNotification();
+                }
                 blackList.delete(intent.getStringExtra(EXTRA_NUMBER));
             }
         }
