@@ -37,7 +37,6 @@ import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.res.Configuration;
 import android.media.AudioManager;
-import android.media.AudioSystem;
 import android.net.Uri;
 import android.os.AsyncResult;
 import android.os.Binder;
@@ -125,8 +124,6 @@ public class PhoneGlobals extends ContextWrapper
     public static final int MMI_CANCEL = 53;
     // Don't use message codes larger than 99 here; those are reserved for
     // the individual Activities of the Phone UI.
-
-    private String mVoiceQualityParam;
 
     /**
      * Allowable values for the wake lock code.
@@ -565,9 +562,6 @@ public class PhoneGlobals extends ContextWrapper
 
             // Read platform settings for TTY feature
             mTtyEnabled = getResources().getBoolean(R.bool.tty_enabled);
-
-            // Read VoiceQuality settings
-            mVoiceQualityParam = getResources().getString(R.string.voice_quality_param);
 
             // Register for misc other intent broadcasts.
             IntentFilter intentFilter =
@@ -1228,12 +1222,6 @@ public class PhoneGlobals extends ContextWrapper
      */
     /* package */ void updatePhoneState(PhoneConstants.State state) {
         if (state != mLastPhoneState) {
-
-            String voiceQualSetting = CallFeaturesSetting.getVoiceQuality();
-            if (mVoiceQualityParam != null && voiceQualSetting != null) {
-                AudioSystem.setParameters(mVoiceQualityParam + "=" + voiceQualSetting);
-            }
-
             mLastPhoneState = state;
             updateProximitySensorMode(state);
 
